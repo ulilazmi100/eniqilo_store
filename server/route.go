@@ -14,6 +14,7 @@ func (s *Server) RegisterRoute() {
 	mainRoute := s.app.Group("/v1")
 
 	registerUserRoute(mainRoute, s.dbPool)
+	registerCustomerRoute(mainRoute, s.dbPool)
 
 }
 
@@ -23,6 +24,14 @@ func registerUserRoute(r fiber.Router, db *pgxpool.Pool) {
 
 	newRoute(userGroup, "POST", "/register", ctr.Register)
 	newRoute(userGroup, "POST", "/login", ctr.Login)
+}
+
+func registerCustomerRoute(r fiber.Router, db *pgxpool.Pool) {
+	ctr := controller.NewCustomerController(svc.NewCustomerSvc(repo.NewCustomerRepo(db)))
+	customerGroup := r.Group("/customer")
+
+	newRouteWithAuth(customerGroup, "POST", "/register", ctr.Register)
+	newRouteWithAuth(customerGroup, "GET", "/", ctr.Search)
 }
 
 func newRoute(router fiber.Router, method, path string, handler fiber.Handler) {
