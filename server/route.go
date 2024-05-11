@@ -15,6 +15,7 @@ func (s *Server) RegisterRoute() {
 
 	registerUserRoute(mainRoute, s.dbPool)
 	registerCustomerRoute(mainRoute, s.dbPool)
+	registerProductRoute(mainRoute, s.dbPool)
 
 }
 
