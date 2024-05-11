@@ -97,7 +97,7 @@ func (r *productRepo) GetProductById(ctx *fiber.Ctx, id string) (*entities.Produ
 
 	// Use QueryRow to get a single row
 	row := r.db.QueryRow(ctx.Context(), query, id)
-	err := row.Scan(&product.Id, &product.Name, &product.Sku, &product.Category, &product.ImageUrl, &product.Notes, &product.Price, &product.Location, &product.IsAvailable, &product.CreatedAt, &product.UpdatedAt) // Add other fields as necessary
+	err := row.Scan(&product.Id, &product.Name, &product.Sku, &product.Category, &product.ImageUrl, &product.Notes, &product.Price, &product.Stock, &product.Location, &product.IsAvailable, &product.CreatedAt, &product.UpdatedAt) // Add other fields as necessary
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (r *productRepo) GetProductById(ctx *fiber.Ctx, id string) (*entities.Produ
 func (r *productRepo) UpdateProduct(ctx *fiber.Ctx, product *entities.ProductRegPayload, productId string) (pgconn.CommandTag, error) {
 	statement := "UPDATE products SET name = $1, sku = $2, category = $3, image_url = $4, notes = $5, price = $6, stock = $7, location = $8, is_avail = $9 WHERE id = $10"
 
-	res, err := r.db.Exec(ctx.Context(), statement, product.Name, product.Sku, product.Category, product.ImageUrl, product.Notes, product.Price, product.Location, product.IsAvailable, productId)
+	res, err := r.db.Exec(ctx.Context(), statement, product.Name, product.Sku, product.Category, product.ImageUrl, product.Notes, product.Price, product.Stock, product.Location, product.IsAvailable, productId)
 
 	return res, err
 }
