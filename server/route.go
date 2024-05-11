@@ -26,6 +26,19 @@ func registerUserRoute(r fiber.Router, db *pgxpool.Pool) {
 	newRoute(userGroup, "POST", "/login", ctr.Login)
 }
 
+func registerProductRoute(r fiber.Router, db *pgxpool.Pool) {
+	ctr := controller.NewProductController(svc.NewProductSvc(repo.NewProductRepo(db)))
+	productGroup := r.Group("/product")
+
+	newRouteWithAuth(productGroup, "POST", "/", ctr.Register)
+	newRouteWithAuth(productGroup, "GET", "/", ctr.Search)
+	newRouteWithAuth(productGroup, "PUT", "/:productId", ctr.Update)
+	newRouteWithAuth(productGroup, "DELETE", "/:productId", ctr.Delete)
+
+	newRoute(productGroup, "GET", "/customer", ctr.SearchSKU)
+
+}
+
 func registerCustomerRoute(r fiber.Router, db *pgxpool.Pool) {
 	ctr := controller.NewCustomerController(svc.NewCustomerSvc(repo.NewCustomerRepo(db)))
 	customerGroup := r.Group("/customer")
