@@ -16,7 +16,6 @@ func (s *Server) RegisterRoute() {
 	registerUserRoute(mainRoute, s.dbPool)
 	registerCustomerRoute(mainRoute, s.dbPool)
 	registerProductRoute(mainRoute, s.dbPool)
-
 }
 
 func registerUserRoute(r fiber.Router, db *pgxpool.Pool) {
@@ -38,6 +37,11 @@ func registerProductRoute(r fiber.Router, db *pgxpool.Pool) {
 
 	newRoute(productGroup, "GET", "/customer", ctr.SearchSKU)
 
+	productCheckoutGroup := r.Group("/product/checkout")
+	ctrTransaction := controller.NewTransactionController(svc.NewTransactionSvc(repo.NewTransactionRepo(db)))
+
+	newRouteWithAuth(productCheckoutGroup, "POST", "/", ctrTransaction.Checkout)
+	newRouteWithAuth(productCheckoutGroup, "GET", "/history", ctrTransaction.History)
 }
 
 func registerCustomerRoute(r fiber.Router, db *pgxpool.Pool) {
