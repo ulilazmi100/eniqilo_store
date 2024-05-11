@@ -26,11 +26,8 @@ func (r *customerRepo) SearchCustomer(ctx *fiber.Ctx, phone string, name string)
 	var customers []entities.CustomerList
 	query := "SELECT id, name, phone FROM customers"
 
-	if name != "" || phone != "" {
-		query += custConstructWhereQuery(phone, name)
-	}
+	query += custConstructWhereQuery(phone, name)
 
-	// Use QueryRow to get a single row
 	rows, err := r.db.Query(ctx.Context(), query)
 	if err != nil {
 		return nil, err
