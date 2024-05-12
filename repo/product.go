@@ -213,6 +213,8 @@ func productConstructSortByQuery(price string, createdAt string) string {
 func custProductConstructWhereQuery(filter entities.FilterSku) string {
 	whereSQL := []string{}
 
+	whereSQL = append(whereSQL, " is_available = TRUE")
+
 	if filter.Name != "" {
 		whereSQL = append(whereSQL, " name ILIKE '%"+filter.Name+"%'")
 	}

@@ -5,6 +5,7 @@ import (
 	"eniqilo_store/responses"
 	"eniqilo_store/svc"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -22,7 +23,13 @@ func (c *TransactionController) Checkout(ctx *fiber.Ctx) error {
 		return responses.NewBadRequestError(err.Error())
 	}
 
-	err := c.svc.Checkout(ctx, newTransaction)
+	validate := validator.New()
+	err := validate.Struct(newTransaction)
+	if err != nil {
+		return responses.NewBadRequestError(err.Error())
+	}
+
+	err = c.svc.Checkout(ctx, newTransaction)
 	if err != nil {
 		return err
 	}

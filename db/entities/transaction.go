@@ -7,25 +7,24 @@ import (
 
 type (
 	TransactionPayload struct {
-		Id             string          `db:"id" json:"id"`
-		CustomerId     string          `db:"customer_id" json:"customerId"`
-		Paid           int             `db:"paid" json:"paid"`
-		Change         int             `db:"change" json:"change"`
-		ProductDetails []ProductDetail `db:"prodcut_details" json:"productDetails"`
+		CustomerId     *string          `db:"customer_id" json:"customerId" validate:"required" `
+		Paid           *int             `db:"paid" json:"paid" validate:"required" `
+		Change         *int             `db:"change" json:"change" validate:"required" `
+		ProductDetails *[]ProductDetail `db:"prodcut_details" json:"productDetails" validate:"required" `
 	}
 
 	Transaction struct {
-		Id             string          `db:"id" json:"transactionId"`
-		CustomerId     string          `db:"customer_id" json:"customerId"`
-		Paid           int             `db:"paid" json:"paid"`
-		Change         int             `db:"change" json:"change"`
-		ProductDetails []ProductDetail `db:"prodcut_details" json:"productDetails"`
-		CreatedAt      string          `db:"created_at" json:"createdAt"`
+		Id             string           `db:"id" json:"transactionId"`
+		CustomerId     *string          `db:"customer_id" json:"customerId" validate:"required" `
+		Paid           *int             `db:"paid" json:"paid" validate:"required" `
+		Change         *int             `db:"change" json:"change" validate:"required" `
+		ProductDetails *[]ProductDetail `db:"prodcut_details" json:"productDetails" validate:"required" `
+		CreatedAt      string           `db:"created_at" json:"createdAt"`
 	}
 
 	ProductDetail struct {
-		ProductId string `db:"product_id" json:"productId"`
-		Quantity  int    `db:"quantity" json:"quantity"`
+		ProductId *string `db:"product_id" json:"productId" validate:"required" `
+		Quantity  *int    `db:"quantity" json:"quantity" validate:"required" `
 	}
 
 	FilterGetTransactions struct {

@@ -32,28 +32,37 @@ func (s *transactionSvc) Checkout(ctx *fiber.Ctx, newTransaction entities.Transa
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	if newTransaction.Change == nil || newTransaction.Paid == nil {
+		return responses.NewBadRequestError("Change or Paid can't be nil")
+	}
+
 	var totalPrice int
 	var ownedProductDetails []entities.ProductDetail
 
-	if newTransaction.CustomerId != "" {
-		_, err := s.repo.GetCustomerById(ctx, newTransaction.CustomerId)
+	if *newTransaction.CustomerId != "" {
+		_, err := s.repo.GetCustomerById(ctx, *newTransaction.CustomerId)
 		if err == pgx.ErrNoRows {
 			return responses.NewNotFoundError("customerId not found")
 		}
+	} else {
+		return responses.NewBadRequestError("customerId is empty")
 	}
 
-	if len(newTransaction.ProductDetails) == 0 {
+	if len(*newTransaction.ProductDetails) == 0 {
 		return responses.NewBadRequestError("productDetails is empty")
 	}
 
-	for _, product_detail := range newTransaction.ProductDetails {
-		if product_detail.Quantity < 1 {
+	for _, product_detail := range *newTransaction.ProductDetails {
+		if product_detail.ProductId == nil || product_detail.Quantity == nil {
+			return responses.NewBadRequestError("ProductId or Quantity can't be nil")
+		}
+		if *product_detail.Quantity < 1 {
 			return responses.NewBadRequestError("One of product quantity is below 1")
 		}
-		if product_detail.ProductId == "" {
+		if *product_detail.ProductId == "" {
 			return responses.NewBadRequestError("Empty ProductId")
 		}
-		price, stock, is_avail, err := s.repo.GetProductById(ctx, product_detail.ProductId)
+		price, stock, is_avail, err := s.repo.GetProductById(ctx, *product_detail.ProductId)
 		if err == pgx.ErrNoRows {
 			return responses.NewNotFoundError("one of productIds is not found")
 		} else if err != nil {
@@ -62,19 +71,20 @@ func (s *transactionSvc) Checkout(ctx *fiber.Ctx, newTransaction entities.Transa
 		if !is_avail {
 			return responses.NewBadRequestError("one of productIds isAvailable == false")
 		}
-		if stock < product_detail.Quantity {
+		if stock < *product_detail.Quantity {
 			return responses.NewBadRequestError("one of productIds stock is not enough")
 		}
-		totalPrice += price * product_detail.Quantity
+		totalPrice += price * *product_detail.Quantity
 
-		ownedProductDetails = append(ownedProductDetails, entities.ProductDetail{ProductId: product_detail.ProductId, Quantity: stock - product_detail.Quantity})
+		qty := stock - *product_detail.Quantity
+		ownedProductDetails = append(ownedProductDetails, entities.ProductDetail{ProductId: product_detail.ProductId, Quantity: &qty})
 	}
 
-	if newTransaction.Paid < totalPrice {
+	if *newTransaction.Paid < totalPrice {
 		return responses.NewBadRequestError("paid is not enough based on all bought product")
 	}
 
-	if (newTransaction.Paid - totalPrice) != newTransaction.Change {
+	if (*newTransaction.Paid - totalPrice) != *newTransaction.Change {
 		return responses.NewBadRequestError("change is not right, based on all bought product, and what is paid")
 	}
 
@@ -84,7 +94,7 @@ func (s *transactionSvc) Checkout(ctx *fiber.Ctx, newTransaction entities.Transa
 	}
 
 	for _, product_detail := range ownedProductDetails {
-		_, err := s.repo.UpdateProduct(ctx, product_detail.Quantity, product_detail.ProductId)
+		_, err := s.repo.UpdateProduct(ctx, *product_detail.Quantity, *product_detail.ProductId)
 		if err != nil {
 			return responses.NewInternalServerError(err.Error())
 		}
