@@ -2,6 +2,7 @@ package repo
 
 import (
 	"eniqilo_store/db/entities"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -26,6 +27,7 @@ func NewTransactionRepo(db *pgxpool.Pool) TransactionRepo {
 
 func (r *transactionRepo) SearchTransaction(ctx *fiber.Ctx, filter entities.FilterGetTransactions) ([]entities.Transaction, error) {
 	var transactions []entities.Transaction
+	var createdAt time.Time
 	query := "SELECT id, customer_id, product_details, paid, change, created_at FROM transactions"
 
 	if filter.CustomerId != "" {
@@ -37,19 +39,24 @@ func (r *transactionRepo) SearchTransaction(ctx *fiber.Ctx, filter entities.Filt
 		} else if filter.CreatedAt == "desc" {
 			query += " ORDER BY created_at DESC"
 		}
+	} else {
+		query += " ORDER BY created_at DESC"
 	}
 
-	rows, err := r.db.Query(ctx.Context(), query)
+	query += " limit $1 offset $2"
+
+	rows, err := r.db.Query(ctx.Context(), query, filter.Limit, filter.Offset)
 	if err != nil {
 		return nil, err
 	}
 
 	for rows.Next() {
 		transaction := entities.Transaction{}
-		err := rows.Scan(&transaction.Id, &transaction.CustomerId, &transaction.ProductDetails, transaction.Paid, transaction.Change, transaction.CreatedAt)
+		err := rows.Scan(&transaction.Id, &transaction.CustomerId, &transaction.ProductDetails, &transaction.Paid, &transaction.Change, &createdAt)
 		if err != nil {
 			return nil, err
 		}
+		transaction.CreatedAt = createdAt.Format(time.RFC3339)
 		transactions = append(transactions, transaction)
 	}
 
@@ -71,17 +78,17 @@ func (r *transactionRepo) AddTransaction(ctx *fiber.Ctx, transaction *entities.T
 func (r *transactionRepo) GetProductById(ctx *fiber.Ctx, id string) (int, int, bool, error) {
 	var price int
 	var stock int
-	var is_avail bool
-	query := "SELECT price, stock, is_avail FROM products WHERE id = $1"
+	var isAvailable bool
+	query := "SELECT price, stock, is_available FROM products WHERE id = $1"
 
 	// Use QueryRow to get a single row
 	row := r.db.QueryRow(ctx.Context(), query, id)
-	err := row.Scan(&price, &stock, &is_avail) // Add other fields as necessary
+	err := row.Scan(&price, &stock, &isAvailable) // Add other fields as necessary
 	if err != nil {
-		return 0, 0, is_avail, err
+		return 0, 0, isAvailable, err
 	}
 
-	return price, stock, is_avail, nil
+	return price, stock, isAvailable, nil
 }
 
 func (r *transactionRepo) UpdateProduct(ctx *fiber.Ctx, stock int, productId string) (pgconn.CommandTag, error) {
@@ -98,7 +105,7 @@ func (r *transactionRepo) GetCustomerById(ctx *fiber.Ctx, id string) (*entities.
 
 	// Use QueryRow to get a single row
 	row := r.db.QueryRow(ctx.Context(), query, id)
-	err := row.Scan(&customer.Id, &customer.Name, &customer.Phone, &customer.CreatedAt, &customer.UpdatedAt) // Add other fields as necessary
+	err := row.Scan(&customer.Id, &customer.Name, &customer.PhoneNumber, &customer.CreatedAt, &customer.UpdatedAt) // Add other fields as necessary
 	if err != nil {
 		return nil, err
 	}

@@ -28,9 +28,9 @@ func (c *CustomerController) Register(ctx *fiber.Ctx) error {
 	}
 
 	respData := fiber.Map{
-		"customerId": customerId,
-		"phone":      newCustomer.PhoneNumber,
-		"name":       newCustomer.Name,
+		"userId":      customerId,
+		"phoneNumber": newCustomer.PhoneNumber,
+		"name":        newCustomer.Name,
 	}
 
 	return ctx.Status(201).JSON(fiber.Map{

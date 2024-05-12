@@ -29,23 +29,29 @@ func NewProductRepo(db *pgxpool.Pool) ProductRepo {
 
 func (r *productRepo) SearchProduct(ctx *fiber.Ctx, filter entities.FilterGetProducts) ([]entities.ProductList, error) {
 	var products []entities.ProductList
-	query := "SELECT id, name, sku, category, image_url, notes, price, stock, location, is_avail, created_at FROM products"
+	var createdAt time.Time
+
+	query := "SELECT id, name, sku, category, image_url, notes, price, stock, location, is_available, created_at FROM products"
 
 	query += productConstructWhereQuery(filter)
 
 	query += productConstructSortByQuery(filter.Price, filter.CreatedAt)
 
-	rows, err := r.db.Query(ctx.Context(), query)
+	query += " limit $1 offset $2"
+
+	rows, err := r.db.Query(ctx.Context(), query, filter.Limit, filter.Offset)
 	if err != nil {
 		return nil, err
 	}
 
 	for rows.Next() {
 		product := entities.ProductList{}
-		err := rows.Scan(&product.Id, &product.Name, &product.Sku, product.Category, product.ImageUrl, product.Notes, product.Price, product.Stock, product.Location, product.IsAvailable, product.CreatedAt)
+		err := rows.Scan(&product.Id, &product.Name, &product.Sku, &product.Category, &product.ImageUrl, &product.Notes, &product.Price, &product.Stock, &product.Location, &product.IsAvailable, &createdAt)
 		if err != nil {
 			return nil, err
 		}
+
+		product.CreatedAt = createdAt.Format(time.RFC3339)
 		products = append(products, product)
 	}
 
@@ -54,23 +60,29 @@ func (r *productRepo) SearchProduct(ctx *fiber.Ctx, filter entities.FilterGetPro
 
 func (r *productRepo) SearchProductCustomer(ctx *fiber.Ctx, filter entities.FilterSku) ([]entities.CustomerProductList, error) {
 	var products []entities.CustomerProductList
+	var createdAt time.Time
+
 	query := "SELECT id, name, sku, category, image_url, price, stock, location, created_at FROM products"
 
 	query += custProductConstructWhereQuery(filter)
 
 	query += custProductConstructSortByQuery(filter.Price)
 
-	rows, err := r.db.Query(ctx.Context(), query)
+	query += " limit $1 offset $2"
+
+	rows, err := r.db.Query(ctx.Context(), query, filter.Limit, filter.Offset)
+
 	if err != nil {
 		return nil, err
 	}
 
 	for rows.Next() {
 		product := entities.CustomerProductList{}
-		err := rows.Scan(&product.Id, &product.Name, &product.Sku, product.Category, product.ImageUrl, product.Price, product.Stock, product.Location, product.CreatedAt)
+		err := rows.Scan(&product.Id, &product.Name, &product.Sku, &product.Category, &product.ImageUrl, &product.Price, &product.Stock, &product.Location, &createdAt)
 		if err != nil {
 			return nil, err
 		}
+		product.CreatedAt = createdAt.Format(time.RFC3339)
 		products = append(products, product)
 	}
 
@@ -79,16 +91,22 @@ func (r *productRepo) SearchProductCustomer(ctx *fiber.Ctx, filter entities.Filt
 
 func (r *productRepo) AddProduct(ctx *fiber.Ctx, product *entities.ProductRegPayload) (string, time.Time, error) {
 	var id string
-	var created_at time.Time
-	statement := "INSERT INTO products (name, sku, category, image_url, notes, price, stock, location, is_avail) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id"
+	var createdAt time.Time
+
+	// isAvail, err := strconv.ParseBool(product.IsAvailable)
+	// if err != nil {
+	// 	return "", time.Time{}, err
+	// }
+
+	statement := "INSERT INTO products (name, sku, category, image_url, notes, price, stock, location, is_available) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, created_at"
 
 	// Use QueryRow for inserting and getting the id back
-	row := r.db.QueryRow(ctx.Context(), statement, product.Name, product.Sku, product.Category, product.ImageUrl, product.Notes, product.Price, product.Location, product.IsAvailable)
-	if err := row.Scan(&id, &created_at); err != nil {
+	row := r.db.QueryRow(ctx.Context(), statement, product.Name, product.Sku, product.Category, product.ImageUrl, product.Notes, product.Price, product.Stock, product.Location, *product.IsAvailable)
+	if err := row.Scan(&id, &createdAt); err != nil {
 		return "", time.Time{}, err
 	}
 
-	return id, created_at, nil
+	return id, createdAt, nil
 }
 
 func (r *productRepo) GetProductById(ctx *fiber.Ctx, id string) (*entities.Product, error) {
@@ -106,9 +124,13 @@ func (r *productRepo) GetProductById(ctx *fiber.Ctx, id string) (*entities.Produ
 }
 
 func (r *productRepo) UpdateProduct(ctx *fiber.Ctx, product *entities.ProductRegPayload, productId string) (pgconn.CommandTag, error) {
-	statement := "UPDATE products SET name = $1, sku = $2, category = $3, image_url = $4, notes = $5, price = $6, stock = $7, location = $8, is_avail = $9 WHERE id = $10"
+	statement := "UPDATE products SET name = $1, sku = $2, category = $3, image_url = $4, notes = $5, price = $6, stock = $7, location = $8, is_available = $9 WHERE id = $10"
+	// isAvail, err := strconv.ParseBool(product.IsAvailable)
+	// if err != nil {
+	// 	return pgconn.CommandTag{}, err
+	// }
 
-	res, err := r.db.Exec(ctx.Context(), statement, product.Name, product.Sku, product.Category, product.ImageUrl, product.Notes, product.Price, product.Stock, product.Location, product.IsAvailable, productId)
+	res, err := r.db.Exec(ctx.Context(), statement, product.Name, product.Sku, product.Category, product.ImageUrl, product.Notes, product.Price, product.Stock, product.Location, *product.IsAvailable, productId)
 
 	return res, err
 }
@@ -140,7 +162,7 @@ func productConstructWhereQuery(filter entities.FilterGetProducts) string {
 	}
 
 	if filter.Category != "" {
-		whereSQL = append(whereSQL, " hasMatched = '"+filter.Category+"'")
+		whereSQL = append(whereSQL, " category = '"+filter.Category+"'")
 	}
 
 	if filter.Sku != "" {
@@ -166,26 +188,26 @@ func productConstructSortByQuery(price string, createdAt string) string {
 	sortBySQL := []string{}
 
 	if price == "asc" {
-		sortBySQL = append(sortBySQL, " price '"+"ASC")
+		sortBySQL = append(sortBySQL, "price ASC")
 	}
 
 	if price == "desc" {
-		sortBySQL = append(sortBySQL, " price '"+"DESC"+"'")
+		sortBySQL = append(sortBySQL, "price DESC")
 	}
 
 	if createdAt == "asc" {
-		sortBySQL = append(sortBySQL, " created_at '"+"ASC")
+		sortBySQL = append(sortBySQL, "created_at ASC")
 	}
 
 	if createdAt == "desc" {
-		sortBySQL = append(sortBySQL, " created_at '"+"DESC"+"'")
+		sortBySQL = append(sortBySQL, "created_at DESC")
 	}
 
 	if len(sortBySQL) > 0 {
-		return " SORT BY " + strings.Join(sortBySQL, " , ")
+		return " ORDER BY " + strings.Join(sortBySQL, ", ")
 	}
 
-	return ""
+	return " ORDER BY created_at DESC"
 }
 
 func custProductConstructWhereQuery(filter entities.FilterSku) string {
@@ -196,7 +218,7 @@ func custProductConstructWhereQuery(filter entities.FilterSku) string {
 	}
 
 	if filter.Category != "" {
-		whereSQL = append(whereSQL, " hasMatched = '"+filter.Category+"'")
+		whereSQL = append(whereSQL, " category = '"+filter.Category+"'")
 	}
 
 	if filter.Sku != "" {
@@ -222,16 +244,16 @@ func custProductConstructSortByQuery(price string) string {
 	sortBySQL := []string{}
 
 	if price == "asc" {
-		sortBySQL = append(sortBySQL, " price '"+"ASC")
+		sortBySQL = append(sortBySQL, "price ASC")
 	}
 
 	if price == "desc" {
-		sortBySQL = append(sortBySQL, " price '"+"DESC"+"'")
+		sortBySQL = append(sortBySQL, "price DESC")
 	}
 
 	if len(sortBySQL) > 0 {
-		return " SORT BY " + strings.Join(sortBySQL, " , ")
+		return " ORDER BY " + strings.Join(sortBySQL, ", ")
 	}
 
-	return ""
+	return " ORDER BY created_at DESC"
 }

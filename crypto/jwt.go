@@ -17,7 +17,7 @@ func GenerateToken(id, phone, name string) (string, error) {
 		Phone: phone,
 		Name:  name,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(10 * time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(60 * time.Minute)),
 		},
 	})
 

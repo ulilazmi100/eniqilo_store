@@ -2,6 +2,7 @@ package entities
 
 import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/google/uuid"
 )
 
 type (
@@ -14,7 +15,7 @@ type (
 	}
 
 	Transaction struct {
-		Id             string          `db:"id" json:"id"`
+		Id             string          `db:"id" json:"transactionId"`
 		CustomerId     string          `db:"customer_id" json:"customerId"`
 		Paid           int             `db:"paid" json:"paid"`
 		Change         int             `db:"change" json:"change"`
@@ -42,10 +43,14 @@ func (t *TransactionPayload) Validate() error {
 			validation.Min(1),
 		),
 		validation.Field(&t.Change,
-			validation.Required.Error("change is required"),
 			validation.Min(0),
 		),
 	)
 
 	return err
+}
+
+func IsValidUUID(u string) bool {
+	_, err := uuid.Parse(u)
+	return err == nil
 }

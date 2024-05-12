@@ -64,7 +64,7 @@ func (s *userSvc) Login(ctx *fiber.Ctx, creds entities.Credential) (string, stri
 		return "", "", "", responses.NewBadRequestError(err.Error())
 	}
 
-	user, err := s.repo.GetUser(ctx, creds.Phone)
+	user, err := s.repo.GetUser(ctx, creds.PhoneNumber)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return "", "", "", responses.NewNotFoundError("user not found")
@@ -77,7 +77,7 @@ func (s *userSvc) Login(ctx *fiber.Ctx, creds entities.Credential) (string, stri
 		return "", "", "", responses.NewBadRequestError("wrong password!")
 	}
 
-	token, err := crypto.GenerateToken(user.Id, user.Phone, user.Name)
+	token, err := crypto.GenerateToken(user.Id, user.PhoneNumber, user.Name)
 	if err != nil {
 		return "", "", "", responses.NewBadRequestError(err.Error())
 	}

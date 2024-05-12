@@ -26,7 +26,7 @@ func (r *userRepo) GetUser(ctx *fiber.Ctx, phone string) (*entities.User, error)
 
 	// Use QueryRow to get a single row
 	row := r.db.QueryRow(ctx.Context(), query, phone)
-	err := row.Scan(&user.Id, &user.Name, &user.Phone, &user.Password, &user.CreatedAt, &user.UpdatedAt) // Add other fields as necessary
+	err := row.Scan(&user.Id, &user.Name, &user.PhoneNumber, &user.Password, &user.CreatedAt, &user.UpdatedAt) // Add other fields as necessary
 	if err != nil {
 		return nil, err
 	}

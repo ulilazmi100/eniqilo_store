@@ -35,7 +35,7 @@ func (r *customerRepo) SearchCustomer(ctx *fiber.Ctx, phone string, name string)
 
 	for rows.Next() {
 		customer := entities.CustomerList{}
-		err := rows.Scan(&customer.Id, &customer.Name, &customer.Phone)
+		err := rows.Scan(&customer.Id, &customer.Name, &customer.PhoneNumber)
 		if err != nil {
 			return nil, err
 		}
@@ -64,7 +64,7 @@ func (r *customerRepo) GetCustomerByPhone(ctx *fiber.Ctx, phone string) (*entiti
 
 	// Use QueryRow to get a single row
 	row := r.db.QueryRow(ctx.Context(), query, phone)
-	err := row.Scan(&customer.Id, &customer.Name, &customer.Phone, &customer.CreatedAt, &customer.UpdatedAt) // Add other fields as necessary
+	err := row.Scan(&customer.Id, &customer.Name, &customer.PhoneNumber, &customer.CreatedAt, &customer.UpdatedAt) // Add other fields as necessary
 	if err != nil {
 		return nil, err
 	}

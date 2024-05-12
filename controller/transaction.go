@@ -37,6 +37,14 @@ func (c *TransactionController) History(ctx *fiber.Ctx) error {
 		return responses.NewBadRequestError(err.Error())
 	}
 
+	if transaction.Limit == 0 {
+		transaction.Limit = 5
+	}
+
+	if transaction.Limit < 0 || transaction.Offset < 0 {
+		return responses.NewBadRequestError("invalid query param")
+	}
+
 	resp, err := c.svc.SearchTransaction(ctx, transaction)
 	if err != nil {
 		return err

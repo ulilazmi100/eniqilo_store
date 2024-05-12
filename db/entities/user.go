@@ -10,12 +10,12 @@ import (
 )
 
 type User struct {
-	Id        string    `db:"id" json:"id"`
-	Phone     string    `db:"phone" json:"phoneNumber"`
-	Name      string    `db:"name" json:"name"`
-	Password  string    `db:"password" json:"password,omitempty"`
-	CreatedAt time.Time `db:"createdAt" json:"createdAt"`
-	UpdatedAt time.Time `db:"updatedAt" json:"updatedAt"`
+	Id          string    `db:"id" json:"id"`
+	PhoneNumber string    `db:"phone" json:"phoneNumber"`
+	Name        string    `db:"name" json:"name"`
+	Password    string    `db:"password" json:"password,omitempty"`
+	CreatedAt   time.Time `db:"createdAt" json:"createdAt"`
+	UpdatedAt   time.Time `db:"updatedAt" json:"updatedAt"`
 }
 
 type RegistrationPayload struct {
@@ -25,8 +25,8 @@ type RegistrationPayload struct {
 }
 
 type Credential struct {
-	Phone    string `json:"phoneNumber"`
-	Password string `json:"password"`
+	PhoneNumber string `json:"phoneNumber"`
+	Password    string `json:"password"`
 }
 
 type JWTPayload struct {
@@ -44,9 +44,9 @@ type JWTClaims struct {
 
 func NewUser(phone, name, password string) *User {
 	u := &User{
-		Phone:    phone,
-		Name:     name,
-		Password: password,
+		PhoneNumber: phone,
+		Name:        name,
+		Password:    password,
 	}
 
 	return u
@@ -54,7 +54,7 @@ func NewUser(phone, name, password string) *User {
 
 func (u *Credential) Validate() error {
 	err := validation.ValidateStruct(u,
-		validation.Field(&u.Phone,
+		validation.Field(&u.PhoneNumber,
 			validation.Required.Error("phone is required"),
 			validation.By(validatePhoneFormat),
 		),
@@ -69,7 +69,7 @@ func (u *Credential) Validate() error {
 
 func (u *User) Validate() error {
 	err := validation.ValidateStruct(u,
-		validation.Field(&u.Phone,
+		validation.Field(&u.PhoneNumber,
 			validation.Required.Error("phone is required"),
 			validation.Length(10, 16).Error("phone number must be between 10 and 16 characters"),
 			validation.By(validatePhoneFormat),

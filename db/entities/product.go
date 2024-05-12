@@ -1,9 +1,10 @@
 package entities
 
 import (
+	"errors"
+	"regexp"
 	"time"
 
-	"github.com/go-ozzo/ozzo-validation/is"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -18,21 +19,21 @@ type (
 		Price       int       `db:"price" json:"price"`
 		Stock       int       `db:"stock" json:"stock"`
 		Location    string    `db:"location" json:"location"`
-		IsAvailable bool      `db:"is_avail" json:"isAvailable"`
+		IsAvailable bool      `db:"is_available" json:"isAvailable"`
 		CreatedAt   time.Time `db:"createdAt" json:"createdAt"`
 		UpdatedAt   time.Time `db:"updatedAt" json:"updatedAt"`
 	}
 
 	ProductRegPayload struct {
-		Name        string    `db:"name" json:"name"`
-		Sku         string    `db:"sku" json:"sku"`
-		Category    string    `db:"category" json:"category"`
-		ImageUrl    string    `db:"image_url" json:"imageUrl"`
-		Notes       string    `db:"notes" json:"notes"`
-		Price       int       `db:"price" json:"price"`
-		Stock       int       `db:"stock" json:"stock"`
-		Location    string    `db:"location" json:"location"`
-		IsAvailable time.Time `db:"is_avail" json:"isAvailable"`
+		Name        string `db:"name" json:"name"`
+		Sku         string `db:"sku" json:"sku"`
+		Category    string `db:"category" json:"category"`
+		ImageUrl    string `db:"image_url" json:"imageUrl"`
+		Notes       string `db:"notes" json:"notes"`
+		Price       int    `db:"price" json:"price"`
+		Stock       int    `db:"stock" json:"stock"`
+		Location    string `db:"location" json:"location"`
+		IsAvailable *bool  `db:"is_available" json:"isAvailable" validate:"required" `
 	}
 
 	FilterGetProducts struct {
@@ -49,17 +50,17 @@ type (
 	}
 
 	ProductList struct {
-		Id          string    `db:"id" json:"id"`
-		Name        string    `db:"name" json:"name"`
-		Sku         string    `db:"sku" json:"sku"`
-		Category    string    `db:"category" json:"category"`
-		ImageUrl    string    `db:"image_url" json:"imageUrl"`
-		Notes       string    `db:"notes" json:"notes"`
-		Price       int       `db:"price" json:"price"`
-		Stock       int       `db:"stock" json:"stock"`
-		Location    string    `db:"location" json:"location"`
-		IsAvailable time.Time `db:"is_avail" json:"isAvailable"`
-		CreatedAt   time.Time `db:"createdAt" json:"createdAt"`
+		Id          string `db:"id" json:"id"`
+		Name        string `db:"name" json:"name"`
+		Sku         string `db:"sku" json:"sku"`
+		Category    string `db:"category" json:"category"`
+		ImageUrl    string `db:"image_url" json:"imageUrl"`
+		Notes       string `db:"notes" json:"notes"`
+		Price       int    `db:"price" json:"price"`
+		Stock       int    `db:"stock" json:"stock"`
+		Location    string `db:"location" json:"location"`
+		IsAvailable bool   `db:"is_available" json:"isAvailable"`
+		CreatedAt   string `db:"createdAt" json:"createdAt"`
 	}
 
 	FilterSku struct {
@@ -83,6 +84,12 @@ type (
 		Location  string `db:"location" json:"location"`
 		CreatedAt string `db:"createdAt" json:"createdAt"`
 	}
+
+	PaginationMeta struct {
+		Limit  int `json:"limit"  validate:"numeric,min=0" schema:"limit"`
+		Offset int `json:"offset"  validate:"numeric,min=0" schema:"offset"`
+		Total  int `json:"total"`
+	}
 )
 
 func (u *ProductRegPayload) Validate() error {
@@ -105,7 +112,7 @@ func (u *ProductRegPayload) Validate() error {
 		),
 		validation.Field(&u.ImageUrl,
 			validation.Required.Error("imageUrl is required"),
-			is.URL,
+			validation.By(validateUrlFormat),
 		),
 		validation.Field(&u.Price,
 			validation.Required.Error("price is required"),
@@ -113,16 +120,35 @@ func (u *ProductRegPayload) Validate() error {
 		),
 		validation.Field(&u.Stock,
 			validation.Required.Error("stock is required"),
-			validation.Min(1),
+			validation.Min(0),
 			validation.Max(100000),
 		),
 		validation.Field(&u.Location,
 			validation.Required.Error("location is required"),
 			validation.Length(1, 200).Error("location must be between 1 and 200 characters"),
 		),
+		// validation.Field(&u.IsAvailable,
+		// 	validation.Required.Error("isAvailable is required"),
+		// 	// validation.In("true", "false"),
+		// ),
 	)
 
 	return err
+}
+
+func validateUrlFormat(value any) error {
+	url, ok := value.(string)
+	if !ok {
+		return errors.New("parse error")
+	}
+
+	pattern := `(https?:\/\/(?:www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|[a-zA-Z0-9]+\.[^\s]{2,})|www\.[a-zA-Z0-9]+\.[^\s]{2,})`
+	rgx := regexp.MustCompile(pattern)
+	if !rgx.MatchString(url) {
+		return errors.New("invalid Url format")
+	}
+
+	return nil
 }
 
 func CategoryChecker(category string) string {

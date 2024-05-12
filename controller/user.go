@@ -29,7 +29,7 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 
 	respData := fiber.Map{
 		"userId":      userId,
-		"phone":       newUser.PhoneNumber,
+		"phoneNumber": newUser.PhoneNumber,
 		"name":        newUser.Name,
 		"accessToken": accessToken,
 	}
@@ -47,8 +47,8 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 	}
 
 	loginPayload := entities.Credential{
-		Phone:    user.PhoneNumber,
-		Password: user.Password,
+		PhoneNumber: user.PhoneNumber,
+		Password:    user.Password,
 	}
 
 	userId, name, accessToken, err := c.svc.Login(ctx, loginPayload)
@@ -58,7 +58,7 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 
 	respData := fiber.Map{
 		"userId":      userId,
-		"phone":       user.PhoneNumber,
+		"phoneNumber": user.PhoneNumber,
 		"name":        name,
 		"accessToken": accessToken,
 	}

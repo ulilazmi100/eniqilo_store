@@ -39,12 +39,12 @@ func (s *productSvc) Register(ctx *fiber.Ctx, newProduct entities.ProductRegPayl
 	return id, time, nil
 }
 
-func (s *productSvc) Update(ctx *fiber.Ctx, newProduct entities.ProductRegPayload, productID string) error {
-	if err := newProduct.Validate(); err != nil {
+func (s *productSvc) Update(ctx *fiber.Ctx, updateProduct entities.ProductRegPayload, productID string) error {
+	if err := updateProduct.Validate(); err != nil {
 		return responses.NewBadRequestError(err.Error())
 	}
 
-	res, err := s.repo.UpdateProduct(ctx, &newProduct, productID)
+	res, err := s.repo.UpdateProduct(ctx, &updateProduct, productID)
 	if res.RowsAffected() == 0 {
 		return responses.NewNotFoundError(err.Error())
 	}
@@ -57,8 +57,6 @@ func (s *productSvc) Update(ctx *fiber.Ctx, newProduct entities.ProductRegPayloa
 
 func (s *productSvc) SearchProduct(ctx *fiber.Ctx, product entities.FilterGetProducts) ([]entities.ProductList, error) {
 	var products []entities.ProductList
-
-	product.Category = entities.CategoryChecker(product.Category)
 
 	products, err := s.repo.SearchProduct(ctx, product)
 	if err != nil {
@@ -73,8 +71,6 @@ func (s *productSvc) SearchProduct(ctx *fiber.Ctx, product entities.FilterGetPro
 
 func (s *productSvc) SearchSKU(ctx *fiber.Ctx, product entities.FilterSku) ([]entities.CustomerProductList, error) {
 	var products []entities.CustomerProductList
-
-	product.Category = entities.CategoryChecker(product.Category)
 
 	products, err := s.repo.SearchProductCustomer(ctx, product)
 	if err != nil {

@@ -8,11 +8,11 @@ import (
 
 type (
 	Customer struct {
-		Id        string    `db:"id" json:"id"`
-		Phone     string    `db:"phone" json:"phoneNumber"`
-		Name      string    `db:"name" json:"name"`
-		CreatedAt time.Time `db:"createdAt" json:"createdAt"`
-		UpdatedAt time.Time `db:"updatedAt" json:"updatedAt"`
+		Id          string    `db:"id" json:"id"`
+		PhoneNumber string    `db:"phone" json:"phoneNumber"`
+		Name        string    `db:"name" json:"name"`
+		CreatedAt   time.Time `db:"createdAt" json:"createdAt"`
+		UpdatedAt   time.Time `db:"updatedAt" json:"updatedAt"`
 	}
 
 	CustomerRegPayload struct {
@@ -26,16 +26,16 @@ type (
 	}
 
 	CustomerList struct {
-		Id    string `db:"id" json:"userId"`
-		Phone string `db:"phone" json:"phone"`
-		Name  string `db:"name" json:"name"`
+		Id          string `db:"id" json:"userId"`
+		PhoneNumber string `db:"phone" json:"phoneNumber"`
+		Name        string `db:"name" json:"name"`
 	}
 )
 
 func NewCustomer(phone, name string) *Customer {
 	cust := &Customer{
-		Phone: phone,
-		Name:  name,
+		PhoneNumber: phone,
+		Name:        name,
 	}
 
 	return cust
@@ -43,7 +43,7 @@ func NewCustomer(phone, name string) *Customer {
 
 func (u *Customer) Validate() error {
 	err := validation.ValidateStruct(u,
-		validation.Field(&u.Phone,
+		validation.Field(&u.PhoneNumber,
 			validation.Required.Error("phone is required"),
 			validation.Length(10, 16).Error("phone number must be between 10 and 16 characters"),
 			validation.By(validatePhoneFormat),
