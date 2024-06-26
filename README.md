@@ -2,8 +2,7 @@
 
 ## 🌄 Background
 
-Eniqilo Store is an backend application for a store to serve their customers, basically a highly performant e-commerce backend.
-Eniqilo Store is part of Project Sprint Batch 2 Week 2 Project. Projectsprint is a sprint to create many resourceful projects in a short time with rigorous testing, load testing, and showcase. This initiative aims to demonstrate the ability to deliver high-quality, scalable applications quickly and effectively.
+Eniqilo Store is a highly performant e-commerce backend application designed to serve store customers efficiently. Developed as part of Project Sprint Batch 2 Week 2, this project aims to showcase the ability to deliver high-quality, scalable applications quickly with rigorous testing and load testing.
 
 ---
 
@@ -12,76 +11,107 @@ Eniqilo Store is part of Project Sprint Batch 2 Week 2 Project. Projectsprint is
 ### Prerequisites
 
 - Go (1.19 or later)
-- Postgres
-- [K6](https://k6.io/docs/get-started/installation/) for testing
+- PostgreSQL
+- [K6](https://k6.io/docs/get-started/installation/) for load testing
 - WSL (if on Windows)
 
-### Running the Project
+### Installation and Setup
 
-#### Environment Variables
+1. **Clone the repository:**
 
-Set the following environment variables:
-```bash
-export DB_NAME=your_db_name
-export DB_PORT=5432
-export DB_HOST=localhost
-export DB_USERNAME=your_db_user
-export DB_PASSWORD=your_db_password
-export DB_PARAMS="sslmode=disabled" # this is needed because in production, we use `sslrootcert=rds-ca-rsa2048-g1.pem` and `sslmode=verify-full` flag to connect
-# read more: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/PostgreSQL.Concepts.General.SSL.html
-export JWT_SECRET=your_jwt_secret
-export BCRYPT_SALT=8 or 10 depending your requirements # don't use 8 in prod! use > 10
-```
+    ```bash
+    git clone https://github.com/ulilazmi100/eniqilo_store.git
+    cd eniqilo_store
+    ```
 
-#### Running Migrations
+2. **Set up environment variables:**
 
-```bash
-migrate -database "postgres://$DB_USERNAME:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME?$DB_PARAMS" -path db/migrations up
-```
+    Create a `.env` file or export these variables in your shell:
 
-#### Running the Server
+    ```bash
+    export DB_NAME=your_db_name
+    export DB_PORT=5432
+    export DB_HOST=localhost
+    export DB_USERNAME=your_db_user
+    export DB_PASSWORD=your_db_password
+    export DB_PARAMS="sslmode=disable"  # or "sslrootcert=rds-ca-rsa2048-g1.pem&sslmode=verify-full" for production
+    export JWT_SECRET=your_jwt_secret
+    export BCRYPT_SALT=8 or 10  # or same or higher than 10 for production
+    ```
 
-```bash
-go run main.go
-```
+3. **Run database migrations:**
 
-#### Optional cleanup if already done or something went wrong (Reverse the migrations if you wanted to)
+    ```bash
+    migrate -database "postgres://$DB_USERNAME:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME?$DB_PARAMS" -path db/migrations up
+    ```
 
-```bash
-migrate -database "postgres://$DB_USERNAME:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME?$DB_PARAMS" -path db/migrations down
-```
+4. **Start the server:**
+
+    ```bash
+    go run main.go
+    ```
+
+5. **Optional: Rollback migrations if needed:**
+
+    ```bash
+    migrate -database "postgres://$DB_USERNAME:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME?$DB_PARAMS" -path db/migrations down
+    ```
+
+### Running with Docker
+
+1. **Build Docker image:**
+
+    ```bash
+    docker build -t eniqilo_store .
+    ```
+
+2. **Run Docker container:**
+
+    ```bash
+    docker run -p 8080:8080 --env-file .env eniqilo_store
+    ```
 
 ---
 
 ## 🧪 Testing
 
 ### Prerequisites
+
 - [K6](https://k6.io/docs/get-started/installation/)
-- A linux environment (WSL / MacOS should be fine)
+- Linux environment (WSL/MacOS)
 
-### Environment Variables
-- `BASE_URL` fill this with your backend url (eg: `http://localhost:8080`)
+### Running Tests
 
-### Steps
-1. Install [K6](https://k6.io/docs/get-started/installation/) and other prerequisites.
-2. Run the server
-3. Open the 'tests' folder 
-4. Run the tests:
-    #### For regular testing
+1. **Set environment variable:**
+
+    ```bash
+    export BASE_URL=http://localhost:8080
+    ```
+
+2. **Run the server.**
+
+3. **Navigate to the `tests` folder and run the tests:**
+
+    #### Regular testing
+
     ```bash
     BASE_URL=http://localhost:8080 make run
     ```
-    #### For load testing
+
+    #### Load testing
+
     ```bash
     BASE_URL=http://localhost:8080 make runLoadTest
     ```
 
-    #### For timed testing
+    #### Timed testing
+
     ```bash
     BASE_URL=http://localhost:8080 make run_timed
     ```
 
-    #### For run for debugging, with result in the output.txt
+    #### Debug testing (output to `output.txt`)
+
     ```bash
     BASE_URL=http://localhost:8080 make run_debug
     ```
@@ -90,49 +120,63 @@ migrate -database "postgres://$DB_USERNAME:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NA
 
 ## 📝 Requirements
 
-[Requirements' Notion](https://openidea-projectsprint.notion.site/EniQilo-Store-93d69f62951c4c8aaf91e6c090127886)
+### Functional Requirements
+
+**Authentication & Authorization:**
+- Register staff: `POST /v1/staff/register`
+- Login staff: `POST /v1/staff/login`
+
+**Product Management:**
+- Add product: `POST /v1/product`
+- Get products: `GET /v1/product`
+- Edit product: `PUT /v1/product/{id}`
+- Delete product: `DELETE /v1/product/{id}`
+
+**SKU Search:**
+- Search products: `GET /v1/product/customer`
+
+**Checkout:**
+- Register customer: `POST /v1/customer/register`
+- Search customer: `GET /v1/customer`
+- Checkout products: `POST /v1/product/checkout`
+- Checkout history: `GET /v1/product/checkout/history`
 
 ### Non-Functional Requirements
 
-- Backend:
-  - Golang with any web framework
-  - Postgres database
-  - Port: 8080
-  - No ORM/Query generator; use raw queries
-  - No external caching
-  - Environment Variables:
-    ```bash
-    export DB_NAME=
-    export DB_PORT=
-    export DB_HOST=
-    export DB_USERNAME=
-    export DB_PASSWORD=
-    export DB_PARAMS="sslmode=disabled" # this is needed because in production, we use `sslrootcert=rds-ca-rsa2048-g1.pem` and `sslmode=verify-full` flag to connect 
-    # read more: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/PostgreSQL.Concepts.General.SSL.html
-    export JWT_SECRET=
-    export BCRYPT_SALT=8 # don't use 8 in prod! use > 10
-    ```
+- Develop on Linux (`WSL` is acceptable for Windows users).
+- Backend server: Golang with any web framework.
+- Database: PostgreSQL.
+- Port: 8080.
+- No ORM/Query generator; use raw queries.
+- No external caching.
+- Use Docker images and Docker registry.
 
-  - Use docker images and docker registry
-  Read more in the [requirements' notion](https://openidea-projectsprint.notion.site/EniQilo-Store-93d69f62951c4c8aaf91e6c090127886)
+### Further Readings:
+- [Eniqilo Store's Requirements' Notion Page](https://openidea-projectsprint.notion.site/EniQilo-Store-93d69f62951c4c8aaf91e6c090127886)
 
-### Database Migration
+---
 
-- Use [golang-migrate](https://github.com/golang-migrate/migrate) for managing database migrations:
-  - Create migration:
+## Database Migration
+
+Use [golang-migrate](https://github.com/golang-migrate/migrate) for managing database migrations:
+
+- Create migration:
+
     ```bash
     migrate create -ext sql -dir db/migrations add_user_table
     ```
-  - Execute migration:
+
+- Execute migration:
+
     ```bash
-    migrate -database "postgres://username:password@host:port/dbname?sslmode=disable" -path db/migrations up
-    ```
-  - Rollback migration:
-    ```bash
-    migrate -database "postgres://username:password@host:port/dbname?sslmode=disable" -path db/migrations down
+    migrate -database "postgres://$DB_USERNAME:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME?$DB_PARAMS" -path db/migrations up
     ```
 
-    Read more in the [requirements' notion](https://openidea-projectsprint.notion.site/EniQilo-Store-93d69f62951c4c8aaf91e6c090127886)
+- Rollback migration:
+
+    ```bash
+    migrate -database "postgres://$DB_USERNAME:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME?$DB_PARAMS" -path db/migrations down
+    ```
 
 ---
 
@@ -165,3 +209,5 @@ migrate -database "postgres://$DB_USERNAME:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NA
 [Muhammad Ulil 'Azmi](https://github.com/ulilazmi100) - [@M_Ulil_Azmi](https://twitter.com/M_Ulil_Azmi)
 
 Project Link: [https://github.com/ulilazmi100/eniqilo_store](https://github.com/ulilazmi100/eniqilo_store)
+
+---
